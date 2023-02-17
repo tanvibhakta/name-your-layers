@@ -16,24 +16,47 @@ figma.ui.onmessage = msg => {
   // your HTML page is to use an object with a "type" property like this.
   if (msg.type === 'rename-layers') {
     const nodes = figma.currentPage.selection;
-    nodes.forEach(node => {
+    const lines = selectRandomCSVLines(pathToCSV);
+    nodes.forEach((node, index) => {
       console.log(node)
-      if (node.type === "FRAME" || node.type === "GROUP" || node.type === "COMPONENT") {
-        node.name = "test";
-      }
-    });
-      }
-    // for (let i = 0; i < msg.count; i++) {
-    //   const rect = figma.createRectangle();
-    //   rect.x = i * 150;
-    //   rect.fills = [{type: 'SOLID', color: {r: 1, g: 0.5, b: 0}}];
-    //   figma.currentPage.appendChild(rect);
-    //   nodes.push(rect);
-    // }
-    // figma.currentPage.selection = nodes;
-    // figma.viewport.scrollAndZoomIntoView(nodes);
+        if (node.type === "FRAME" || node.type === "GROUP" || node.type === "COMPONENT") {
+          node.name = "test";
+        }
+      })
+
+    }
 
   // Make sure to close the plugin when you're done. Otherwise the plugin will
   // keep running, which shows the cancel button at the bottom of the screen.
   figma.closePlugin();
 };
+
+
+const pathToCSV = "https://raw.githubusercontent.com/tanvibhakta/name-your-layers/main/names.csv";
+async function selectRandomCSVLines(filePath: string): Promise<string[]> {
+  const response = await fetch(filePath);
+  if (!response.ok) {
+    throw new Error(`Failed to fetch CSV file: ${response.status} ${response.statusText}`);
+  }
+  const fileContent = await response.text();
+  const lines = fileContent.split(/\r?\n/);
+  const linesToPrint = 5;
+  const printedLines = new Set();
+  const selectedLines: string[] = [];
+  while (printedLines.size < linesToPrint) {
+    const randomIndex = Math.floor(Math.random() * lines.length);
+    if (!printedLines.has(randomIndex)) {
+      selectedLines.push(lines[randomIndex]);
+      printedLines.add(randomIndex);
+      // console.log("selected lines", selectedLines)
+      //   console.log("printed lines", printedLines)
+    }
+  }
+  return selectedLines;
+}
+
+selectRandomCSVLines(pathToCSV).then((lines) => {
+  console.log("lines", lines)
+}).catch((error) => {
+  console.error(error);
+});
